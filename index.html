@@ -214,6 +214,12 @@
   .total-line{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
   .total-line .label{font-size:13px;color:var(--ink-soft);}
   .total-line .val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;}
+  .pct-badge{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;
+    background:var(--teal-soft);color:var(--teal);border-radius:20px;padding:2px 10px;margin-left:6px;
+    vertical-align:middle;
+  }
+  .water-section{margin-top:22px;border-top:1px dashed var(--line);padding-top:18px;}
   .gauge{height:14px;border-radius:20px;background:#EFEADA;border:1px solid var(--line);overflow:hidden;position:relative;}
   .gauge-fill{height:100%;border-radius:20px;transition:width .3s ease;}
   .advice{
@@ -360,7 +366,7 @@
       <div class="total-bar-wrap">
         <div class="total-line">
           <span class="label">今日已攝取熱量</span>
-          <span class="val"><span id="outTotal">0</span> kcal</span>
+          <span class="val"><span id="outTotal">0</span> kcal <span class="pct-badge" id="pctBadge">–%</span></span>
         </div>
         <div class="gauge">
           <div class="gauge-fill" id="gaugeFill" style="width:0%;background:var(--blue);"></div>
@@ -369,6 +375,16 @@
       </div>
 
       <div class="advice neutral" id="adviceBox">尚未計算目標熱量，先完成 01–04 步驟。</div>
+
+      <div class="water-section">
+        <div class="card-sub" style="margin:0 0 12px;font-weight:700;color:var(--ink);">建議每日飲水量</div>
+        <div class="result-grid">
+          <div class="stat"><div class="k">每日目標飲水量</div><div class="v" id="waterTotal">–<span>mL</span></div></div>
+          <div class="stat"><div class="k">今日食物已提供水分</div><div class="v" id="waterFromFood">0<span>mL</span></div></div>
+          <div class="stat der-stat"><div class="k">建議額外主動飲水量</div><div class="v" id="waterNeeded">–<span>mL</span></div></div>
+        </div>
+        <div class="note" id="waterNote">完成上方「試算結果」取得每日目標熱量後，會自動算出每日目標飲水量。</div>
+      </div>
     </section>
   </main>
 
@@ -467,12 +483,15 @@
     ]},
   ];
 
+  // moisture: average water content as a fraction of weight (市售平均值),
+  // used to estimate how much of the daily water requirement is already
+  // supplied by food; 1 g water ≈ 1 mL.
   const foodTypes = [
-    {key:'dry',    name:'乾飼料', density:3.7},
-    {key:'wet',    name:'罐頭',   density:1.0},
-    {key:'dental', name:'潔牙骨', density:3.0},
-    {key:'jerky',  name:'肉乾',   density:3.5},
-    {key:'fruit',  name:'水果',   density:0.6},
+    {key:'dry',    name:'乾飼料', density:3.7, moisture:0.10},
+    {key:'wet',    name:'罐頭',   density:1.0, moisture:0.78},
+    {key:'dental', name:'潔牙骨', density:3.0, moisture:0.10},
+    {key:'jerky',  name:'肉乾',   density:3.5, moisture:0.20},
+    {key:'fruit',  name:'水果',   density:0.6, moisture:0.85},
   ];
 
   // ---------- state ----------
@@ -757,6 +776,7 @@
   function updateFoodTotals(){
     let total = 0;
     let treatTotal = 0;
+    let waterFromFood = 0;
     const treatKeys = ['dental','jerky','fruit'];
     foodTypes.forEach(f=>{
       const amt = parseFloat(document.getElementById(`amt_${f.key}`).value) || 0;
@@ -765,15 +785,38 @@
       document.getElementById(`kcal_${f.key}`).textContent = `${Math.round(kcal)} kcal`;
       total += kcal;
       if(treatKeys.includes(f.key)) treatTotal += kcal;
+      waterFromFood += amt * f.moisture;
     });
     document.getElementById('outTotal').textContent = Math.round(total);
+    document.getElementById('waterFromFood').innerHTML = `${Math.round(waterFromFood)}<span>mL</span>`;
 
     const fill = document.getElementById('gaugeFill');
     const gaugeNote = document.getElementById('gaugeNote');
     const advice = document.getElementById('adviceBox');
+    const pctBadge = document.getElementById('pctBadge');
+    const waterTotalEl = document.getElementById('waterTotal');
+    const waterNeededEl = document.getElementById('waterNeeded');
+    const waterNote = document.getElementById('waterNote');
+
+    // water requirement: common clinical rule of thumb — roughly 1 mL of
+    // total water (drinking + food moisture) per kcal of energy. Use the
+    // target DER as the baseline; if actual intake today exceeds the
+    // target, use actual intake instead (since the body only needs to
+    // process what it actually consumed, not a hypothetical lower target).
+    const waterBasis = state.der!=null ? Math.max(state.der, total) : total;
+    const waterTotalNeeded = waterBasis * 1.0;
+    const waterExtra = Math.max(0, waterTotalNeeded - waterFromFood);
+    waterTotalEl.innerHTML = `${Math.round(waterTotalNeeded)}<span>mL</span>`;
+    waterNeededEl.innerHTML = `${Math.round(waterExtra)}<span>mL</span>`;
+    waterNote.textContent = state.der!=null
+      ? '目標飲水量以「每消耗 1 kcal 熱量約需 1 mL 水」的常用臨床估算為基礎，以每日目標熱量（DER）為起點；若今日實際吃下的熱量超過目標，則改以實際攝取量計算，因為身體只需處理真正吃下去的份量。涵蓋飲水與食物本身水分。實際需求會因氣溫、活動量而增加，貓咪或已有腎臟病、泌尿道疾病史者，建議另外諮詢獸醫調整飲水目標，且應確保飲水隨時可取得。'
+      : '目標飲水量以「每消耗 1 kcal 熱量約需 1 mL 水」的常用臨床估算為基礎；完成上方「試算結果」取得每日目標熱量（DER）後，會以 DER 為起點計算，若實際攝取超過目標則自動改用實際攝取量。';
 
     if(!state.der){
       fill.style.width = '0%';
+      pctBadge.textContent = '–%';
+      pctBadge.style.background = 'var(--teal-soft)';
+      pctBadge.style.color = 'var(--teal)';
       gaugeNote.textContent = '請先完成上方「試算結果」以取得每日目標熱量。';
       advice.className='advice neutral';
       advice.textContent='尚未計算目標熱量，先完成 01–04 步驟。';
@@ -782,7 +825,11 @@
 
     const pct = (total/state.der)*100;
     fill.style.width = Math.min(pct,130)+'%';
-    fill.style.background = pct<85 ? 'var(--gold)' : pct>115 ? 'var(--clay)' : 'var(--teal)';
+    const barColor = pct<85 ? 'var(--gold)' : pct>115 ? 'var(--clay)' : 'var(--teal)';
+    fill.style.background = barColor;
+    pctBadge.textContent = `${pct.toFixed(0)}%`;
+    pctBadge.style.background = pct<85 ? 'var(--gold-soft)' : pct>115 ? 'var(--clay-soft)' : 'var(--teal-soft)';
+    pctBadge.style.color = pct<85 ? '#7c4d10' : pct>115 ? '#7c3220' : 'var(--teal)';
     gaugeNote.textContent = `目標 ${Math.round(state.der)} kcal ・ 目前為目標的 ${pct.toFixed(0)}%`;
 
     let msg='', cls='';
