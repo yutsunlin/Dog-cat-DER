@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>寵物體態與熱量試算 · 診療紀錄卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EFE4;
+    --card:#FFFFFF;
+    --ink:#20302C;
+    --ink-soft:#5B675F;
+    --line:#DDD7C4;
+    --gold:#C97F2E;
+    --gold-soft:#F1DDB8;
+    --teal:#3E6F63;
+    --teal-soft:#DCE9E2;
+    --clay:#B85B45;
+    --clay-soft:#F3DAD1;
+    --blue:#5B7C93;
+    --blue-soft:#DEE7ED;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(32,48,44,0.035) 0px, rgba(32,48,44,0.035) 1px, transparent 1px, transparent 32px);
+    color:var(--ink);
+    font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:760px;margin:0 auto;padding:28px 18px 60px;}
+
+  .hero{padding:8px 4px 26px;border-bottom:1px solid var(--line);margin-bottom:26px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:.14em;
+    color:var(--teal);
+    text-transform:uppercase;
+    display:flex;align-items:center;gap:8px;
+    margin-bottom:10px;
+  }
+  .eyebrow::before{content:"";width:18px;height:1px;background:var(--teal);display:inline-block;}
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(26px,5.4vw,36px);
+    margin:0 0 8px;
+    letter-spacing:-.01em;
+  }
+  .hero p{margin:0;color:var(--ink-soft);font-size:14.5px;max-width:56ch;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 20px;
+    margin-bottom:18px;
+    box-shadow:0 1px 0 rgba(32,48,44,0.03);
+  }
+  .card-head{display:flex;align-items:baseline;gap:10px;margin-bottom:16px;}
+  .card-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;color:var(--teal);
+    border:1px solid var(--teal-soft);
+    background:var(--teal-soft);
+    padding:2px 7px;border-radius:20px;
+  }
+  .card-title{font-weight:700;font-size:16.5px;}
+  .card-sub{color:var(--ink-soft);font-size:13px;margin:-8px 0 16px;}
+
+  /* form controls */
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:500;color:var(--ink-soft);margin-bottom:7px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  input[type=number], select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    font-size:15px;
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink);
+    background:#FDFCF8;
+  }
+  select{font-family:'Noto Sans TC',sans-serif;}
+  input:focus, select:focus, button:focus-visible, .seg button:focus-visible, .bcs-btn:focus-visible, .life-btn:focus-visible{
+    outline:2px solid var(--gold);outline-offset:2px;
+  }
+
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+  .seg button{
+    flex:1;border:none;background:#FDFCF8;padding:10px 8px;font-size:14px;
+    font-family:'Noto Sans TC',sans-serif;color:var(--ink-soft);cursor:pointer;
+    border-right:1px solid var(--line);
+  }
+  .seg button:last-child{border-right:none;}
+  .seg button.active{background:var(--teal);color:#fff;font-weight:700;}
+
+  .unit-suffix{
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    font-family:'Noto Sans TC',sans-serif;font-size:12.5px;color:var(--ink-soft);
+    pointer-events:none;
+  }
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);margin-top:4px;}
+  .checkline input{width:16px;height:16px;}
+
+  /* BCS strip */
+  .bcs-strip{
+    display:flex;gap:8px;overflow-x:auto;padding:6px 2px 14px;
+    scrollbar-width:thin;
+  }
+  .bcs-btn{
+    flex:0 0 auto;width:78px;
+    border:1.5px solid var(--line);background:#FDFCF8;border-radius:10px;
+    padding:9px 6px 8px;cursor:pointer;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    transition:border-color .15s, transform .15s;
+  }
+  .bcs-btn:hover{transform:translateY(-2px);}
+  .bcs-btn.active{border-color:var(--gold);background:var(--gold-soft);}
+  .bcs-btn .num{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;
+  }
+  .bcs-desc{
+    font-size:13px;color:var(--ink-soft);background:#FDFCF8;border:1px solid var(--line);
+    border-radius:9px;padding:10px 12px;min-height:20px;
+  }
+  .bcs-desc b{color:var(--ink);}
+  .criteria-list{margin:8px 0 0;padding-left:18px;}
+  .criteria-list li{margin-bottom:4px;}
+  .criteria-list li:last-child{margin-bottom:0;}
+  .bcs-source{font-size:11.5px;color:var(--ink-soft);margin-top:10px;}
+  .bcs-source a{color:var(--teal);}
+
+  .activity-legend{
+    margin-top:9px;background:#FDFCF8;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;
+  }
+  .activity-legend p{margin:0 0 6px;font-size:12.5px;color:var(--ink-soft);}
+  .activity-legend p:last-child{margin-bottom:0;}
+  .activity-legend b{color:var(--ink);}
+
+  /* lifestyle options (legacy, unused) */
+  .life-grid{display:flex;flex-direction:column;gap:8px;}
+  .life-btn{
+    text-align:left;border:1.5px solid var(--line);background:#FDFCF8;border-radius:10px;
+    padding:11px 13px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--ink);
+  }
+  .life-btn .range{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);margin-left:6px;}
+  .life-btn.active{border-color:var(--teal);background:var(--teal-soft);font-weight:700;}
+
+  .banner{
+    border:1px solid var(--gold);background:var(--gold-soft);border-radius:10px;
+    padding:12px 14px;font-size:13.5px;color:#7c4d10;
+  }
+
+  .coeff-panel{
+    margin-top:16px;border-top:1px dashed var(--line);padding-top:16px;
+  }
+  .coeff-value-line{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .coeff-value-line .cvl-label{font-size:13px;color:var(--ink-soft);}
+  .coeff-value-line .cvl-val{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;color:var(--teal);}
+  input[type=range]{width:100%;accent-color:var(--teal);}
+  .coeff-note{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
+
+  .calc-btn-wrap{display:flex;justify-content:center;margin:22px 0 26px;}
+  #calcBtn{
+    font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:15px;
+    background:var(--ink);color:#fff;border:none;padding:13px 34px;
+    border-radius:30px;cursor:pointer;letter-spacing:.02em;
+    transition:background .15s;
+  }
+  #calcBtn:hover{background:var(--teal);}
+
+  .hidden{display:none;}
+
+  /* result card */
+  .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  .stat{
+    background:#FDFCF8;border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px;
+  }
+  .stat .k{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .stat .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;}
+  .stat .v span{font-size:13px;font-weight:400;color:var(--ink-soft);margin-left:3px;}
+  .der-stat{grid-column:1/-1;background:var(--gold-soft);border-color:var(--gold);}
+  .der-stat .v{font-size:30px;color:#8a5416;}
+  .note{font-size:12.5px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:10px;margin-top:4px;}
+
+  /* food log */
+  .food-row{
+    display:grid;grid-template-columns:1.4fr 0.9fr 0.9fr 0.9fr;gap:10px;align-items:end;
+    padding:10px 0;border-bottom:1px solid var(--line);
+  }
+  .food-row:last-of-type{border-bottom:none;}
+  .food-row .fname{font-size:13.5px;font-weight:600;padding-bottom:10px;}
+  .food-row label{font-size:11px;color:var(--ink-soft);display:block;margin-bottom:4px;}
+  .food-row .kcal-out{
+    font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:var(--teal);
+    padding-bottom:10px;text-align:right;
+  }
+  .food-head{display:grid;grid-template-columns:1.4fr 0.9fr 0.9fr 0.9fr;gap:10px;margin-bottom:2px;}
+  .food-head span{font-size:11px;color:var(--ink-soft);font-weight:600;}
+
+  .total-bar-wrap{margin-top:20px;}
+  .total-line{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .total-line .label{font-size:13px;color:var(--ink-soft);}
+  .total-line .val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;}
+  .gauge{height:14px;border-radius:20px;background:#EFEADA;border:1px solid var(--line);overflow:hidden;position:relative;}
+  .gauge-fill{height:100%;border-radius:20px;transition:width .3s ease;}
+  .advice{
+    margin-top:14px;padding:12px 14px;border-radius:10px;font-size:13.5px;font-weight:500;
+    border:1px solid var(--line);
+  }
+  .advice.good{background:var(--teal-soft);border-color:var(--teal);color:#1f4740;}
+  .advice.over{background:var(--clay-soft);border-color:var(--clay);color:#7c3220;}
+  .advice.under{background:var(--gold-soft);border-color:var(--gold);color:#7c4d10;}
+  .advice.neutral{background:#F1EFE6;color:var(--ink-soft);}
+
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);}
+  footer p{font-size:11.5px;color:var(--ink-soft);margin:4px 0;}
+
+  @media(max-width:480px){
+    .row2,.row3{grid-template-columns:1fr;}
+    .result-grid{grid-template-columns:1fr;}
+    .food-row, .food-head{grid-template-columns:1.2fr 0.8fr 0.8fr 0.8fr;font-size:12px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="eyebrow">Body Condition &amp; Energy Chart</div>
+    <h1>寵物體態與每日熱量試算</h1>
+    <p>依體重、年齡與生理狀態、體態評分（BCS）、絕育與活動型態，估算理想體重與每日建議熱量攝取（DER），再對照實際飲食內容給出當日建議。</p>
+  </div>
+
+  <main>
+    <!-- STEP 1 -->
+    <section class="card">
+      <div class="card-head"><span class="card-num">01</span><span class="card-title">基本資料</span></div>
+
+      <div class="field">
+        <label>動物種類</label>
+        <div class="seg" id="speciesSeg">
+          <button data-val="dog" class="active">狗</button>
+          <button data-val="cat">貓</button>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="weight">目前體重（kg）</label>
+          <input type="number" id="weight" min="0.1" step="0.1" placeholder="例如 5.2">
+        </div>
+        <div class="field">
+          <label>年齡</label>
+          <div class="row2" style="gap:8px;">
+            <div style="position:relative;">
+              <input type="number" id="ageYear" min="0" step="1" placeholder="0" style="padding-right:28px;">
+              <span class="unit-suffix">歲</span>
+            </div>
+            <div style="position:relative;">
+              <input type="number" id="ageMonth" min="0" max="11" step="1" placeholder="0" style="padding-right:28px;">
+              <span class="unit-suffix">月</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>性別</label>
+          <div class="seg" id="sexSeg">
+            <button data-val="f" class="active">母</button>
+            <button data-val="m">公</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>絕育狀態</label>
+          <div class="seg" id="neuterSeg">
+            <button data-val="1" class="active">已絕育</button>
+            <button data-val="0">未絕育</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field hidden" id="pregnantField">
+        <label class="checkline"><input type="checkbox" id="pregnantChk"> 目前懷孕／哺乳中</label>
+      </div>
+
+      <div class="field" id="activityField">
+        <label>日常活動量</label>
+        <div class="seg" id="activitySeg">
+          <button data-val="low">低活動量</button>
+          <button data-val="moderate" class="active">一般活動量</button>
+          <button data-val="high">高強度／比賽犬</button>
+        </div>
+        <div class="activity-legend">
+          <p><b>低：</b>大部分時間久坐、每日散步少於 30 分鐘，或高齡、術後恢復期動物。</p>
+          <p><b>一般：</b>每日規律散步／玩耍 1–2 次，一般居家寵物常見的活動程度。</p>
+          <p><b>高強度：</b>每日高強度訓練或工作，如敏捷賽、服從賽、搜救犬、牧羊工作犬，或戶外狩獵型貓咪。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: BCS -->
+    <section class="card">
+      <div class="card-head"><span class="card-num">02</span><span class="card-title">體態評分 BCS（1–9）</span></div>
+      <div class="bcs-strip" id="bcsStrip"></div>
+      <div class="bcs-desc" id="bcsDescBox">請選擇上方最接近的體態圖示</div>
+      <p class="bcs-source">評估重點依國際通用之 9 分制體態評分（WSAVA Body Condition Score）架構整理。貓咪腹部下方常有一塊自然下垂的脂肪皮膚（俗稱「原始生殖腺遺跡袋」），即使體態偏瘦也可能存在，不宜單獨以此判斷過重，仍須綜合肋骨觸感與腰身共同評估。</p>
+    </section>
+
+    <!-- STEP 3: physiological state override -->
+    <section class="card">
+      <div class="card-head"><span class="card-num">03</span><span class="card-title">熱量係數判定</span></div>
+      <p class="card-sub">成長期／懷孕期會自動覆蓋上方活動量設定，改採固定或範圍係數；BCS 6 會在活動量係數上小幅下修，BCS≥7 或 ≤3 則改用對應的體重管理係數。</p>
+
+      <div class="banner hidden" id="growthBanner"></div>
+
+      <div class="coeff-panel" id="coeffPanel"></div>
+    </section>
+
+    <div class="calc-btn-wrap"><button id="calcBtn">計算每日建議熱量</button></div>
+
+    <!-- RESULT -->
+    <section class="card result hidden" id="resultCard">
+      <div class="card-head"><span class="card-num">04</span><span class="card-title">試算結果</span></div>
+      <div class="result-grid">
+        <div class="stat"><div class="k">計算用體重</div><div class="v" id="outIdeal">–<span>kg</span></div></div>
+        <div class="stat"><div class="k">靜止能量需求 RER</div><div class="v" id="outRer">–<span>kcal</span></div></div>
+        <div class="stat der-stat"><div class="k">每日建議熱量攝取 DER</div><div class="v" id="outDer">–<span>kcal /日</span></div></div>
+      </div>
+      <div class="note" id="outNote"></div>
+    </section>
+
+    <!-- STEP 4: FOOD LOG -->
+    <section class="card" id="foodLog">
+      <div class="card-head"><span class="card-num">05</span><span class="card-title">今日飲食紀錄</span></div>
+      <p class="card-sub">熱量密度已預填市售平均值，建議依實際包裝標示調整。</p>
+
+      <div class="food-head">
+        <span>品項</span><span>攝取量 (g)</span><span>熱量密度 (kcal/g)</span><span style="text-align:right">小計</span>
+      </div>
+      <div id="foodRows"></div>
+
+      <div class="total-bar-wrap">
+        <div class="total-line">
+          <span class="label">今日已攝取熱量</span>
+          <span class="val"><span id="outTotal">0</span> kcal</span>
+        </div>
+        <div class="gauge">
+          <div class="gauge-fill" id="gaugeFill" style="width:0%;background:var(--blue);"></div>
+        </div>
+        <div class="note" id="gaugeNote" style="margin-top:8px;border-top:none;padding-top:0;">請先完成上方「試算結果」以取得每日目標熱量。</div>
+      </div>
+
+      <div class="advice neutral" id="adviceBox">尚未計算目標熱量，先完成 01–04 步驟。</div>
+    </section>
+  </main>
+
+  <footer>
+    <p>本工具採用簡化版 RER（70 × 計算用體重<sup>0.75</sup>）搭配生理狀態／活動係數估算，係數區間參考室內外活動量、絕育狀態、成長期與懷孕期之國際獸醫營養指引常見範圍，僅供飼主日常參考，非醫療處方。個別動物之代謝率、疾病史、品種差異仍應由獸醫師評估後調整。</p>
+    <p>成長期與懷孕哺乳期並非「原則上不限食」：小型幼犬貓與哺乳後期常需少量多餐或彈性採食，但大型／巨型犬幼犬應定量控制餵食速度，避免生長過快造成骨骼發育問題；懷孕前 2/3 期熱量需求與一般成犬貓相近，僅最後 1/3 期及哺乳期需大幅提高。</p>
+    <p>零食（潔牙骨／肉乾／水果等）建議合計不超過每日熱量攝取的 10%，以免稀釋正餐的均衡營養。</p>
+  </footer>
+</div>
+
+<script>
+  // ---------- coefficient tables (per provided reference charts) ----------
+  const dogGrowth = {
+    u4:  {fixed:3.0, label:'幼犬成長期（未滿 4 個月）'},
+    o4:  {fixed:2.0, label:'幼犬成長期（4 個月以上，尚未成年）'},
+  };
+  const catGrowth = {
+    kitten: {fixed:2.5, label:'幼貓成長期'},
+  };
+  const dogGestation = {fixed:3.0, label:'懷孕期／哺乳期'};
+  const catGestation = {min:1.6, max:2.0, label:'懷孕期／哺乳期'};
+
+  // Daily activity level (fixed values, set directly by owner in Step 01,
+  // split by neuter status for 低/一般; 高強度 uses a single value since
+  // workload intensity dominates over reproductive status at that level).
+  const dogActivity = {
+    low:      {neutered:1.2, intact:1.4, label:'低活動量'},
+    moderate: {neutered:1.4, intact:1.6, label:'一般活動量'},
+    high:     {fixed:2.5, label:'高強度／比賽犬（工作犬、敏捷賽、搜救犬等）'},
+  };
+  const catActivity = {
+    low:      {neutered:1.0, intact:1.2, label:'低活動量'},
+    moderate: {neutered:1.2, intact:1.4, label:'一般活動量'},
+    high:     {fixed:1.6, label:'高活動量（戶外／狩獵型貓咪）'},
+  };
+  // Overweight/obese (BCS >= 7): unified across species per 2014 AAHA Weight
+  // Management Guidelines for Dogs and Cats — feed 80% of RER calculated on
+  // IDEAL body weight as the starting point; referenced again in the 2021
+  // AAHA Nutrition and Weight Management Guidelines.
+  const overweightCoeff = {
+    fixed: 0.8,
+    floor: 0.7,
+    label: '過重／肥胖（體重管理起始值，狗貓通用）',
+    source: '2014 AAHA Weight Management Guidelines for Dogs and Cats（2021 AAHA Nutrition and Weight Management Guidelines 亦沿用此建議）',
+  };
+  const underweightCoeff = {
+    dog:{min:1.6, max:2.0, label:'體重過輕（增重評估，非官方表定係數）'},
+    cat:{min:1.4, max:1.8, label:'體重過輕（增重評估，非官方表定係數）'},
+  };
+
+  const bcsData = [
+    {n:1, label:'惡病質', criteria:[
+      '遠看即可清楚看見肋骨、腰椎與骨盆骨輪廓',
+      '完全觸摸不到脂肪覆蓋',
+      '明顯肌肉量流失，體態瘦削凹陷',
+    ]},
+    {n:2, label:'極瘦', criteria:[
+      '肋骨、腰椎、骨盆骨用眼睛就容易看見',
+      '摸不到脂肪覆蓋',
+      '觸診可感覺到肌肉量減少',
+    ]},
+    {n:3, label:'偏瘦', criteria:[
+      '肋骨很容易摸到，幾乎不需施力，甚至可看見輪廓',
+      '腰椎上緣可見',
+      '由上往下看腰身明顯內收，側面看腹部上收線清楚',
+    ]},
+    {n:4, label:'略瘦', criteria:[
+      '肋骨容易摸到，僅覆蓋一層薄脂肪',
+      '由上往下看腰身線條清楚可辨',
+      '側面看腹部上收線明顯',
+    ]},
+    {n:5, label:'理想體態', criteria:[
+      '肋骨可摸到，覆蓋一層均勻薄脂肪、不外露',
+      '由上往下看，肋骨後方腰身清楚可見',
+      '側面看腹部有自然上收曲線',
+    ]},
+    {n:6, label:'略胖', criteria:[
+      '肋骨仍摸得到，但脂肪覆蓋稍增厚',
+      '由上往下看腰身仍可辨識、但已不明顯',
+      '腹部上收線仍存在，但較不明顯',
+    ]},
+    {n:7, label:'過重', criteria:[
+      '肋骨觸摸略吃力，脂肪覆蓋明顯增厚',
+      '腰部與尾根處開始出現脂肪堆積',
+      '由上往下看腰身幾乎消失，腹部上收線變得平坦',
+    ]},
+    {n:8, label:'肥胖', criteria:[
+      '肋骨需用力按壓才摸得到',
+      '腰部、尾根、下背部脂肪堆積明顯',
+      '由上往下看腰身消失，側面看腹部下垂膨大、無上收',
+    ]},
+    {n:9, label:'重度肥胖', criteria:[
+      '胸廓、脊椎、尾根覆蓋大量脂肪，幾乎摸不到骨骼',
+      '頸部、四肢也出現明顯脂肪堆積',
+      '腰身與腹部上收完全消失，腹部明顯下垂膨大',
+    ]},
+  ];
+
+  const foodTypes = [
+    {key:'dry',    name:'乾飼料', density:3.7},
+    {key:'wet',    name:'罐頭',   density:1.0},
+    {key:'dental', name:'潔牙骨', density:3.0},
+    {key:'jerky',  name:'肉乾',   density:3.5},
+    {key:'fruit',  name:'水果',   density:0.6},
+  ];
+
+  // ---------- state ----------
+  let state = {
+    species:'dog', sex:'f', neutered:1, pregnant:false, ageMonths:null,
+    activityLevel:'moderate',
+    bcs:null, coeffValue:null, der:null,
+  };
+
+  // ---------- silhouette svg ----------
+  // Original schematic illustrations (not a reproduction of any published
+  // chart) encoding the same standard visual landmarks used in 9-point body
+  // condition scoring: rib visibility, waist tuck, abdominal profile, and
+  // fat deposits at the tailbase/neck for the upper end of the scale.
+  function silhouette(bcs){
+    const rx = 24 + bcs*2.6;
+    const bellyDrop = bcs>=7 ? (bcs-6)*2.4 : 0;
+    const waistPinch = bcs<=3 ? (4-bcs)*3.2 : (bcs===4?2:0);
+    const ribOpacity = bcs<=4 ? [0.7,0.55,0.4,0.22][bcs-1] : 0;
+    const fill = bcs<=2?'#9fb9c9': bcs<=4?'#a9c9bb': bcs===5?'#e3b563': bcs<=7?'#d99a5e':'#c47a5e';
+
+    let ribs = '';
+    if(ribOpacity>0){
+      for(let i=0;i<3;i++){
+        const x = 34 + i*7;
+        ribs += `<path d="M${x} 20 Q${x+3} 27 ${x} 34" stroke="#3b3226" stroke-width="1.1" fill="none" opacity="${ribOpacity}"/>`;
+      }
+    }
+    // bone landmark dots for very thin scores (hip bone / spine visible)
+    let bones = '';
+    if(bcs<=2){
+      bones += `<circle cx="30" cy="18" r="1.6" fill="#3b3226" opacity="0.6"/>`;
+      bones += `<circle cx="70" cy="17" r="1.4" fill="#3b3226" opacity="0.5"/>`;
+      bones += `<path d="M25 15 L85 14" stroke="#3b3226" stroke-width="0.8" opacity="0.35"/>`;
+    }
+    // tailbase / lumbar fat pad for obese scores
+    let fatPad = '';
+    if(bcs>=8){
+      fatPad += `<ellipse cx="30" cy="38" rx="9" ry="6" fill="${fill}" opacity="0.55"/>`;
+    }
+    // neck fat thickening for the most severe score
+    let neckFat = '';
+    if(bcs===9){
+      neckFat += `<ellipse cx="88" cy="30" rx="10" ry="7" fill="${fill}" opacity="0.6"/>`;
+    }
+    const waistPath = waistPinch>0
+      ? `M22 30 Q${30-waistPinch/2} 34 30 40`
+      : `M22 30 Q26 ${34+bellyDrop} 30 40`;
+
+    return `<svg viewBox="0 0 100 60" width="52" height="34" aria-hidden="true">
+      <ellipse cx="55" cy="30" rx="${rx}" ry="15" fill="${fill}" opacity="0.9"/>
+      ${neckFat}
+      <circle cx="90" cy="22" r="9" fill="${fill}" opacity="0.9"/>
+      ${fatPad}
+      <path d="${waistPath} L30 40 L22 40 Z" fill="${fill}" opacity="0.9"/>
+      <line x1="35" y1="42" x2="35" y2="52" stroke="${fill}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="75" y1="42" x2="75" y2="52" stroke="${fill}" stroke-width="4" stroke-linecap="round"/>
+      ${ribs}
+      ${bones}
+    </svg>`;
+  }
+
+  // ---------- build BCS strip ----------
+  const strip = document.getElementById('bcsStrip');
+  bcsData.forEach(item=>{
+    const btn = document.createElement('button');
+    btn.className='bcs-btn';
+    btn.dataset.val=item.n;
+    btn.innerHTML = `${silhouette(item.n)}<span class="num">${item.n} · ${item.label}</span>`;
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.bcs-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.bcs = item.n;
+      document.getElementById('bcsDescBox').innerHTML =
+        `<b>${item.n} 分・${item.label}</b><ul class="criteria-list">${item.criteria.map(c=>`<li>${c}</li>`).join('')}</ul>`;
+      renderStep2();
+    });
+    strip.appendChild(btn);
+  });
+
+  // ---------- segmented controls ----------
+  function wireSeg(id, onPick){
+    document.querySelectorAll(`#${id} button`).forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll(`#${id} button`).forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        onPick(btn.dataset.val);
+      });
+    });
+  }
+  wireSeg('speciesSeg', v=>{ state.species=v; renderStep2(); });
+  wireSeg('sexSeg', v=>{ state.sex=v; syncPregnantVisibility(); renderStep2(); });
+  wireSeg('neuterSeg', v=>{
+    state.neutered=Number(v);
+    syncPregnantVisibility();
+    renderStep2();
+  });
+  wireSeg('activitySeg', v=>{ state.activityLevel=v; renderStep2(); });
+  function readAgeMonths(){
+    const yEl = document.getElementById('ageYear');
+    const mEl = document.getElementById('ageMonth');
+    const y = yEl.value===''? null : parseFloat(yEl.value);
+    const m = mEl.value===''? null : parseFloat(mEl.value);
+    if(y==null && m==null) return null;
+    return (y||0)*12 + (m||0);
+  }
+  document.getElementById('ageYear').addEventListener('input', ()=>{
+    state.ageMonths = readAgeMonths();
+    renderStep2();
+  });
+  document.getElementById('ageMonth').addEventListener('input', ()=>{
+    state.ageMonths = readAgeMonths();
+    renderStep2();
+  });
+  document.getElementById('pregnantChk').addEventListener('change', e=>{
+    state.pregnant = e.target.checked;
+    renderStep2();
+  });
+
+  function syncPregnantVisibility(){
+    const show = state.sex==='f' && state.neutered===0;
+    document.getElementById('pregnantField').classList.toggle('hidden', !show);
+    if(!show){ state.pregnant=false; document.getElementById('pregnantChk').checked=false; }
+  }
+
+  // ---------- growth detection ----------
+  function growthCategory(){
+    const age = state.ageMonths;
+    if(age==null || isNaN(age)) return null;
+    if(state.species==='cat'){
+      return age<12 ? {...catGrowth.kitten} : null;
+    } else {
+      if(age<4) return {...dogGrowth.u4};
+      if(age<18) return {...dogGrowth.o4};
+      return null;
+    }
+  }
+
+  // ---------- step 2 rendering ----------
+  function renderStep2(){
+    const growth = growthCategory();
+    const banner = document.getElementById('growthBanner');
+    const activityField = document.getElementById('activityField');
+
+    if(state.pregnant || growth){
+      activityField.classList.add('hidden');
+      banner.classList.remove('hidden');
+      banner.textContent = state.pregnant
+        ? '偵測到懷孕／哺乳狀態，已自動採用懷孕期係數（見下方），暫不套用活動量設定。'
+        : `偵測到成長期動物（${Math.floor(state.ageMonths/12)} 歲 ${Math.round(state.ageMonths%12)} 個月），已自動採用成長期固定係數：${growth.label}，暫不套用活動量設定。`;
+    } else {
+      activityField.classList.remove('hidden');
+      banner.classList.add('hidden');
+    }
+    renderCoeffPanel();
+  }
+
+  function renderCoeffPanel(){
+    const panel = document.getElementById('coeffPanel');
+    const growth = growthCategory();
+    let html='';
+
+    if(state.pregnant){
+      if(state.species==='dog'){
+        html = coeffFixedHtml(dogGestation.label, dogGestation.fixed,
+          '懷孕前 2/3 期熱量需求與一般成犬相近；最後 1/3 期及哺乳期需大幅提高，建議少量多餐，並依窩仔數個別調整，請與獸醫師討論，非「完全不限量」。');
+      } else {
+        html = coeffRangeHtml('pg', catGestation.label, catGestation.min, catGestation.max,
+          '懷孕後期與哺乳期熱量需求會再提高，常需少量多餐或彈性採食，實際需求依哺乳幼貓數量而異，建議與獸醫師討論調整，非「完全不限量」。');
+      }
+    } else if(growth){
+      state.coeffValue = growth.fixed;
+      const note = state.species==='dog'
+        ? '幼犬成長期代謝快、易低血糖，可少量多餐；但大型／巨型犬應「定量」控制餵食速度，避免生長過快造成骨骼與關節發育問題，並非不限量餵食，建議依生長曲線由獸醫師調整。'
+        : '幼貓成長期代謝快、易餓，常見少量多餐或彈性採食，但仍應定期量測體重與體態，避免過快增重，非「完全不限量」。';
+      html = coeffFixedHtml(growth.label, growth.fixed, note);
+    } else if(state.bcs!=null && state.bcs<=3){
+      const c = underweightCoeff[state.species];
+      html = coeffRangeHtml('uw', c.label, c.min, c.max,
+        '體態過瘦不在標準活動係數表中，此為概略增重參考區間，建議儘速安排獸醫檢查，排除疾病或攝取不足等因素。');
+    } else if(state.bcs!=null && state.bcs>=7){
+      html = coeffFixedHtml(overweightCoeff.label, overweightCoeff.fixed,
+        `依「理想體重 RER × 80%」作為起始熱量（出處：${overweightCoeff.source}）。不建議一開始就低於此值；若後續回診減重進度不如預期，最低也不應低於 RER 的 70%，且須諮詢獸醫或動物營養專科調整。長期熱量限制下，務必注意蛋白質與微量營養素（如鉀、B 群、必需脂肪酸等）攝取是否足夠，建議搭配專用減重處方飼料，而非單純減少一般飼料餵食量，以免營養不良。`);
+    } else {
+      const table = state.species==='dog'?dogActivity:catActivity;
+      const tier = table[state.activityLevel];
+      const baseVal = tier.fixed!=null ? tier.fixed : (state.neutered? tier.neutered : tier.intact);
+      const bcsAdjusted = state.bcs===6;
+      const val = bcsAdjusted ? Math.max(1.0, parseFloat((baseVal-0.2).toFixed(2))) : baseVal;
+      const bcsNote = bcsAdjusted
+        ? '體態偏胖（BCS 6），已將係數下修 0.2 作為預防性調整，避免持續增重；下修後不低於 1.0 下限，尚不需啟動正式減重公式（BCS ≥7 才適用）。'
+        : '';
+      if(tier.fixed!=null){
+        const note = ['高強度活動熱量需求差異大，此為常見參考值；長時間耐力型工作犬（如雪橇犬）需求可能更高，建議諮詢運動獸醫營養師個別調整。', bcsNote].filter(Boolean).join(' ');
+        html = coeffFixedHtml(tier.label, val, note);
+      } else {
+        const statusLabel = state.neutered? '已絕育':'未絕育';
+        html = coeffFixedHtml(`${tier.label}・${statusLabel}`, val, bcsNote);
+      }
+    }
+    panel.innerHTML = html;
+
+    const slider = panel.querySelector('input[type=range]');
+    if(slider){
+      slider.addEventListener('input', e=>{
+        state.coeffValue = parseFloat(e.target.value);
+        panel.querySelector('.cvl-val').textContent = `×${state.coeffValue.toFixed(2)}`;
+      });
+      state.coeffValue = parseFloat(slider.value);
+    }
+  }
+
+  function coeffFixedHtml(label, val, note){
+    state.coeffValue = val;
+    return `
+      <div class="coeff-value-line">
+        <span class="cvl-label">${label}（固定係數）</span>
+        <span class="cvl-val">×${val.toFixed(2)}</span>
+      </div>
+      ${note? `<div class="coeff-note">${note}</div>`:''}
+    `;
+  }
+
+  function coeffRangeHtml(id, label, min, max, note, dispMin, dispMax){
+    const mid = parseFloat(((min+max)/2).toFixed(2));
+    const dmin = dispMin!=null?dispMin:min;
+    const dmax = dispMax!=null?dispMax:max;
+    return `
+      <div class="coeff-value-line">
+        <span class="cvl-label">${label}（區間 ×${dmin.toFixed(2)}–${dmax.toFixed(2)}）</span>
+        <span class="cvl-val">×${mid.toFixed(2)}</span>
+      </div>
+      <input type="range" min="${min}" max="${max}" step="0.05" value="${mid}">
+      ${note? `<div class="coeff-note">${note}</div>`:''}
+    `;
+  }
+
+  // initial render
+  syncPregnantVisibility();
+  renderStep2();
+
+  // ---------- calculation ----------
+  document.getElementById('calcBtn').addEventListener('click', ()=>{
+    const weight = parseFloat(document.getElementById('weight').value);
+    if(!weight || weight<=0){ alert('請輸入有效的體重數值'); return; }
+    if(!state.bcs){ alert('請先選擇體態評分 BCS'); return; }
+    if(state.coeffValue==null){ alert('請確認生理狀態與活動型態係數'); return; }
+
+    const usingCurrentWeight = state.pregnant || growthCategory();
+    const calcWeight = usingCurrentWeight ? weight : weight / (1 + 0.1*(state.bcs-5));
+    const rer = 70 * Math.pow(calcWeight, 0.75);
+    const der = rer * state.coeffValue;
+
+    state.der = der;
+
+    document.getElementById('outIdeal').innerHTML = `${calcWeight.toFixed(1)}<span>kg</span>`;
+    document.getElementById('outRer').innerHTML = `${Math.round(rer)}<span>kcal</span>`;
+    document.getElementById('outDer').innerHTML = `${Math.round(der)}<span>kcal /日</span>`;
+    document.getElementById('outNote').textContent =
+      `係數 ×${state.coeffValue.toFixed(2)}　${usingCurrentWeight? '（成長期／懷孕期以目前體重計算，非 BCS 調整後理想體重）':'（依 BCS 推估之理想體重計算）'}`;
+    document.getElementById('resultCard').classList.remove('hidden');
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+
+    updateFoodTotals();
+  });
+
+  // ---------- food log ----------
+  const foodRows = document.getElementById('foodRows');
+  foodTypes.forEach(f=>{
+    const row = document.createElement('div');
+    row.className='food-row';
+    row.innerHTML = `
+      <div class="fname">${f.name}</div>
+      <div><label>攝取量</label><input type="number" min="0" step="1" value="0" id="amt_${f.key}"></div>
+      <div><label>密度</label><input type="number" min="0" step="0.1" value="${f.density}" id="den_${f.key}"></div>
+      <div class="kcal-out" id="kcal_${f.key}">0 kcal</div>
+    `;
+    foodRows.appendChild(row);
+    row.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', updateFoodTotals));
+  });
+
+  function updateFoodTotals(){
+    let total = 0;
+    let treatTotal = 0;
+    const treatKeys = ['dental','jerky','fruit'];
+    foodTypes.forEach(f=>{
+      const amt = parseFloat(document.getElementById(`amt_${f.key}`).value) || 0;
+      const den = parseFloat(document.getElementById(`den_${f.key}`).value) || 0;
+      const kcal = amt*den;
+      document.getElementById(`kcal_${f.key}`).textContent = `${Math.round(kcal)} kcal`;
+      total += kcal;
+      if(treatKeys.includes(f.key)) treatTotal += kcal;
+    });
+    document.getElementById('outTotal').textContent = Math.round(total);
+
+    const fill = document.getElementById('gaugeFill');
+    const gaugeNote = document.getElementById('gaugeNote');
+    const advice = document.getElementById('adviceBox');
+
+    if(!state.der){
+      fill.style.width = '0%';
+      gaugeNote.textContent = '請先完成上方「試算結果」以取得每日目標熱量。';
+      advice.className='advice neutral';
+      advice.textContent='尚未計算目標熱量，先完成 01–04 步驟。';
+      return;
+    }
+
+    const pct = (total/state.der)*100;
+    fill.style.width = Math.min(pct,130)+'%';
+    fill.style.background = pct<85 ? 'var(--gold)' : pct>115 ? 'var(--clay)' : 'var(--teal)';
+    gaugeNote.textContent = `目標 ${Math.round(state.der)} kcal ・ 目前為目標的 ${pct.toFixed(0)}%`;
+
+    let msg='', cls='';
+    if(pct < 85){
+      cls='under';
+      msg=`攝取偏低，約為目標的 ${pct.toFixed(0)}%。若非刻意減重階段，建議增加約 ${Math.round(state.der-total)} kcal，避免體重下降過快或營養不足。`;
+    } else if(pct > 115){
+      cls='over';
+      msg=`攝取偏高，約為目標的 ${pct.toFixed(0)}%。建議減少約 ${Math.round(total-state.der)} kcal，以免造成體重上升。`;
+    } else {
+      cls='good';
+      msg=`攝取量落在建議範圍內（目標的 ${pct.toFixed(0)}%），請維持目前的餵食搭配。`;
+    }
+
+    if(state.der>0 && treatTotal/state.der > 0.1){
+      msg += ` 另外，零食（潔牙骨／肉乾／水果）已佔每日熱量 ${((treatTotal/state.der)*100).toFixed(0)}%，超過建議上限 10%，建議適度減少，以維持正餐營養均衡。`;
+    }
+
+    advice.className = 'advice '+cls;
+    advice.textContent = msg;
+  }
+
+  updateFoodTotals();
+</script>
+</body>
+</html>
