@@ -166,11 +166,18 @@
   .coeff-panel{
     margin-top:16px;border-top:1px dashed var(--line);padding-top:16px;
   }
-  .coeff-value-line{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
-  .coeff-value-line .cvl-label{font-size:13px;color:var(--ink-soft);}
-  .coeff-value-line .cvl-val{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;color:var(--teal);}
-  input[type=range]{width:100%;accent-color:var(--teal);}
-  .coeff-note{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
+  .coeff-value-line{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
+  .coeff-value-line .cvl-label{font-size:13px;color:var(--ink-soft);flex:0 0 auto;}
+  .coeff-value-line .cvl-val{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;flex:1;}
+  .coeff-value-line input[type=range]{flex:1;min-width:100px;max-width:160px;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;height:6px;}
+  .coeff-value-line input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--teal);border:2px solid var(--teal-soft);cursor:pointer;box-shadow:0 2px 4px rgba(62,111,99,0.3);}
+  .coeff-value-line input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--teal);border:2px solid var(--teal-soft);cursor:pointer;box-shadow:0 2px 4px rgba(62,111,99,0.3);}
+  .coeff-value-line input[type=range]::-webkit-slider-runnable-track{background:linear-gradient(to right, var(--gold-soft) 0%, var(--teal-soft) 50%, var(--clay-soft) 100%);height:4px;border-radius:2px;border:none;}
+  .coeff-value-line input[type=range]::-moz-range-track{background:transparent;border:none;}
+  .coeff-value-line input[type=range]::-moz-range-progress{background:var(--teal-soft);height:4px;border-radius:2px;}
+  .slider-val{font-weight:700;color:var(--teal);min-width:45px;text-align:right;font-size:16px;}
+  .coeff-note{font-size:12.5px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:10px;margin-top:8px;}
+  .coeff-advisory{font-size:12px;color:var(--ink);background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;margin-top:12px;line-height:1.5;}
 
   .calc-btn-wrap{display:flex;justify-content:center;margin:22px 0 26px;}
   #calcBtn{
@@ -253,7 +260,21 @@
     <p>依體重、年齡與生理狀態、體態評分（BCS）、絕育與活動型態，估算理想體重與每日建議熱量攝取（DER），再對照實際飲食內容給出當日建議。</p>
   </div>
 
-  <main>
+  <section style="background:#F9F6F1;border-top:2px solid var(--gold);border-bottom:2px solid var(--gold);padding:16px 18px;margin:0 0 20px;text-align:center;">
+    <div style="max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">
+      <img src="clinic-logo.png" alt="寵之寶動物醫院" style="width:60px;height:60px;border-radius:8px;">
+      <div style="text-align:left;">
+        <div style="font-weight:700;font-size:15px;color:var(--ink);margin-bottom:4px;">寵之寶動物醫院</div>
+        <div style="font-size:12px;color:var(--ink-soft);line-height:1.5;">
+          <div>📍 台北市大安區信義路四段294巷3號1樓</div>
+          <div>📞 02 2325 3899</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--ink);margin-top:10px;border-top:1px solid var(--gold-soft);padding-top:10px;">
+      💡 本計算器為寵之寶動物醫院提供的飼主參考工具。若對計算結果有疑問或需要個別化飲食建議，歡迎來院諮詢獸醫師。
+    </div>
+  </section>
     <!-- STEP 1 -->
     <section class="card">
       <div class="card-head"><span class="card-num">01</span><span class="card-title">基本資料</span></div>
@@ -263,6 +284,16 @@
         <div class="seg" id="speciesSeg">
           <button data-val="dog" class="active">狗</button>
           <button data-val="cat">貓</button>
+        </div>
+      </div>
+
+      <div class="field hidden" id="breedSizeField">
+        <label>犬種體型（決定成長期長度）</label>
+        <div class="seg" id="breedSizeSeg">
+          <button data-val="small">小型犬</button>
+          <button data-val="medium">中型犬</button>
+          <button data-val="large" class="active">大型犬</button>
+          <button data-val="giant">巨型犬</button>
         </div>
       </div>
 
@@ -389,9 +420,17 @@
   </main>
 
   <footer>
+    <p style="text-align:center;font-weight:700;color:var(--ink);margin-bottom:12px;">寵之寶動物醫院</p>
     <p>本工具採用簡化版 RER（70 × 計算用體重<sup>0.75</sup>）搭配生理狀態／活動係數估算，係數區間參考室內外活動量、絕育狀態、成長期與懷孕期之國際獸醫營養指引常見範圍，僅供飼主日常參考，非醫療處方。個別動物之代謝率、疾病史、品種差異仍應由獸醫師評估後調整。</p>
     <p>成長期與懷孕哺乳期並非「原則上不限食」：小型幼犬貓與哺乳後期常需少量多餐或彈性採食，但大型／巨型犬幼犬應定量控制餵食速度，避免生長過快造成骨骼發育問題；懷孕前 2/3 期熱量需求與一般成犬貓相近，僅最後 1/3 期及哺乳期需大幅提高。</p>
     <p>零食（潔牙骨／肉乾／水果等）建議合計不超過每日熱量攝取的 10%，以免稀釋正餐的均衡營養。</p>
+    <p style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;text-align:center;font-size:12px;color:var(--ink-soft);">
+      <strong style="color:var(--ink);">寵之寶動物醫院</strong><br>
+      📍 台北市大安區信義路四段294巷3號1樓<br>
+      📞 02 2325 3899<br>
+      <br>
+      若對本計算器有任何疑問或需要個別化飲食建議，歡迎來院預約諮詢獸醫師。
+    </p>
   </footer>
 </div>
 
@@ -496,7 +535,7 @@
 
   // ---------- state ----------
   let state = {
-    species:'dog', sex:'f', neutered:1, pregnant:false, ageMonths:null,
+    species:'dog', breedSize:'large', sex:'f', neutered:1, pregnant:false, ageMonths:null,
     activityLevel:'moderate',
     bcs:null, coeffValue:null, der:null,
   };
@@ -582,7 +621,12 @@
       });
     });
   }
-  wireSeg('speciesSeg', v=>{ state.species=v; renderStep2(); });
+  wireSeg('speciesSeg', v=>{
+    state.species=v;
+    document.getElementById('breedSizeField').classList.toggle('hidden', v!=='dog');
+    renderStep2();
+  });
+  wireSeg('breedSizeSeg', v=>{ state.breedSize=v; renderStep2(); });
   wireSeg('sexSeg', v=>{ state.sex=v; syncPregnantVisibility(); renderStep2(); });
   wireSeg('neuterSeg', v=>{
     state.neutered=Number(v);
@@ -621,12 +665,19 @@
   function growthCategory(){
     const age = state.ageMonths;
     if(age==null || isNaN(age)) return null;
+    
+    // BCS ≥ 6 overrides growth period: treat as overweight management instead
+    if(state.bcs!=null && state.bcs>=6) return null;
+    
     if(state.species==='cat'){
       return age<12 ? {...catGrowth.kitten} : null;
     } else {
-      if(age<4) return {...dogGrowth.u4};
-      if(age<18) return {...dogGrowth.o4};
-      return null;
+      // Growth period end varies by breed size
+      const breedGrowthEndMonths = {small:10, medium:12, large:18, giant:24}[state.breedSize] || 18;
+      
+      if(age<4) return {...dogGrowth.u4};  // Early growth: 0-4 months
+      if(age<breedGrowthEndMonths) return {...dogGrowth.o4};  // Later growth: 4 months to end
+      return null;  // Adult
     }
   }
 
@@ -653,80 +704,117 @@
     const panel = document.getElementById('coeffPanel');
     const growth = growthCategory();
     let html='';
+    let defaultCoeff = 1.4;
+    let minCoeff = 1.0;
+    let maxCoeff = 2.0;
+    let coeffLabel = '每日熱量係數';
+    let coeffNote = '';
+
+    // Helper: check if currently in growth period for dogs (ignoring BCS for this check)
+    function isInGrowthPeriod(){
+      if(state.species!=='dog' || state.ageMonths==null) return false;
+      const breedGrowthEndMonths = {small:10, medium:12, large:18, giant:24}[state.breedSize] || 18;
+      return state.ageMonths < breedGrowthEndMonths;
+    }
 
     if(state.pregnant){
-      if(state.species==='dog'){
-        html = coeffFixedHtml(dogGestation.label, dogGestation.fixed,
-          '懷孕前 2/3 期熱量需求與一般成犬相近；最後 1/3 期及哺乳期需大幅提高，建議少量多餐，並依窩仔數個別調整，請與獸醫師討論，非「完全不限量」。');
-      } else {
-        html = coeffRangeHtml('pg', catGestation.label, catGestation.min, catGestation.max,
-          '懷孕後期與哺乳期熱量需求會再提高，常需少量多餐或彈性採食，實際需求依哺乳幼貓數量而異，建議與獸醫師討論調整，非「完全不限量」。');
-      }
+      defaultCoeff = state.species==='dog' ? 3.0 : 1.8;
+      minCoeff = state.species==='dog' ? 3.0 : 1.6;
+      maxCoeff = state.species==='dog' ? 3.0 : 2.0;
+      coeffLabel = '懷孕／哺乳期';
+      coeffNote = state.species==='dog'
+        ? '懷孕前 2/3 期熱量需求與一般成犬相近；最後 1/3 期及哺乳期需大幅提高，建議少量多餐，並依窩仔數個別調整，請與獸醫師討論，非「完全不限量」。'
+        : '懷孕後期與哺乳期熱量需求會再提高，常需少量多餐或彈性採食，實際需求依哺乳幼貓數量而異，建議與獸醫師討論調整，非「完全不限量」。';
     } else if(growth){
-      state.coeffValue = growth.fixed;
-      const note = state.species==='dog'
-        ? '幼犬成長期代謝快、易低血糖，可少量多餐；但大型／巨型犬應「定量」控制餵食速度，避免生長過快造成骨骼與關節發育問題，並非不限量餵食，建議依生長曲線由獸醫師調整。'
-        : '幼貓成長期代謝快、易餓，常見少量多餐或彈性採食，但仍應定期量測體重與體態，避免過快增重，非「完全不限量」。';
-      html = coeffFixedHtml(growth.label, growth.fixed, note);
+      if(state.ageMonths < 4){
+        defaultCoeff = 3.0;
+        minCoeff = 3.0;
+        maxCoeff = 3.0;
+        coeffLabel = '幼犬早期成長';
+        coeffNote = '幼犬成長期代謝快、易低血糖，可少量多餐；但大型／巨型犬應「定量」控制餵食速度，避免生長過快造成骨骼與關節發育問題，並非不限量餵食，建議依生長曲線由獸醫師調整。';
+      } else {
+        defaultCoeff = 2.0;
+        minCoeff = 2.0;
+        maxCoeff = 2.0;
+        coeffLabel = '幼犬後期成長';
+        coeffNote = '幼犬成長期代謝快、易低血糖，可少量多餐；但大型／巨型犬應「定量」控制餵食速度，避免生長過快造成骨骼與關節發育問題，並非不限量餵食，建議依生長曲線由獸醫師調整。';
+      }
     } else if(state.bcs!=null && state.bcs<=3){
-      const c = underweightCoeff[state.species];
-      html = coeffRangeHtml('uw', c.label, c.min, c.max,
-        '體態過瘦不在標準活動係數表中，此為概略增重參考區間，建議儘速安排獸醫檢查，排除疾病或攝取不足等因素。');
+      defaultCoeff = state.species==='dog' ? 1.8 : 1.6;
+      minCoeff = state.species==='dog' ? 1.6 : 1.4;
+      maxCoeff = state.species==='dog' ? 2.0 : 1.8;
+      coeffLabel = '體重過輕（增重評估）';
+      coeffNote = '體態過瘦不在標準活動係數表中，此為增重參考範圍，建議儘速安排獸醫檢查，排除疾病或攝取不足等因素。';
+    } else if(state.bcs!=null && state.bcs===6){
+      const inGrowth = isInGrowthPeriod();
+      if(inGrowth){
+        defaultCoeff = 1.2;
+        minCoeff = 1.0;
+        maxCoeff = 1.4;
+        coeffLabel = '成長期＋體重管理';
+        coeffNote = `⚠️ 該動物年齡僅 ${Math.floor(state.ageMonths/12)} 歲 ${state.ageMonths%12} 個月，仍在成長期內，卻已 BCS 6（偏胖）→ 成長曲線異常。常見原因：(1) 過度餵食；(2) 內分泌疾病（庫欣氏症等）；(3) 遺傳易胖體質。建議立即安排獸醫檢查、內分泌篩檢，由獸醫或營養師調整係數。`;
+      } else {
+        const table = state.species==='dog'?dogActivity:catActivity;
+        const tier = table[state.activityLevel];
+        const baseVal = tier.fixed!=null ? tier.fixed : (state.neutered? tier.neutered : tier.intact);
+        defaultCoeff = Math.max(1.0, baseVal - 0.2);
+        minCoeff = Math.max(1.0, baseVal - 0.4);
+        maxCoeff = baseVal;
+        coeffLabel = '體態預防調整（BCS 6）';
+        coeffNote = '體態偏胖（BCS 6），已提供下修 0.2 的預防性調整範圍；可與獸醫師討論後微調，避免持續增重；若進展不如預期或分數上升至 7 分以上，則需啟動正式減重公式。';
+      }
     } else if(state.bcs!=null && state.bcs>=7){
-      html = coeffFixedHtml(overweightCoeff.label, overweightCoeff.fixed,
-        `依「理想體重 RER × 80%」作為起始熱量（出處：${overweightCoeff.source}）。不建議一開始就低於此值；若後續回診減重進度不如預期，最低也不應低於 RER 的 70%，且須諮詢獸醫或動物營養專科調整。長期熱量限制下，務必注意蛋白質與微量營養素（如鉀、B 群、必需脂肪酸等）攝取是否足夠，建議搭配專用減重處方飼料，而非單純減少一般飼料餵食量，以免營養不良。`);
+      const inGrowth = isInGrowthPeriod();
+      defaultCoeff = inGrowth ? 1.2 : 0.8;
+      minCoeff = inGrowth ? 1.0 : 0.7;
+      maxCoeff = inGrowth ? 1.4 : 1.0;
+      coeffLabel = inGrowth ? '成長期＋減重' : '成年期減重';
+      const urgentWarning = inGrowth 
+        ? `\n\n⚠️ 緊急警訊：該動物年齡僅 ${Math.floor(state.ageMonths/12)} 歲 ${state.ageMonths%12} 個月，仍在成長期內，卻已達 BCS ${state.bcs} 分（${state.bcs<=7?'過重':'肥胖'}）→ 成長曲線嚴重異常。常見原因：(1) 過度餵食；(2) 內分泌疾病（庫欣氏症、甲狀腺低下等）；(3) 遺傳易胖體質；(4) 運動不足或醫學問題。立即安排獸醫檢查、進行內分泌篩檢評估。由獸醫或動物營養師設計個別化減重計畫，定時監測生長曲線。`
+        : '';
+      coeffNote = `依「理想體重 RER × ${inGrowth?'120%':'80%'}」作為起始熱量（出處：${overweightCoeff.source}）。下方滑桿提供調整範圍供與獸醫師討論；不建議一開始就低於此建議值，若後續減重進度不如預期，可逐次調降（最低不低於 RER 的 70%）。長期熱量限制下，務必注意蛋白質與微量營養素（鉀、B 群、必需脂肪酸等）攝取，建議搭配專用減重處方飼料。${urgentWarning}`;
     } else {
       const table = state.species==='dog'?dogActivity:catActivity;
       const tier = table[state.activityLevel];
       const baseVal = tier.fixed!=null ? tier.fixed : (state.neutered? tier.neutered : tier.intact);
-      const bcsAdjusted = state.bcs===6;
-      const val = bcsAdjusted ? Math.max(1.0, parseFloat((baseVal-0.2).toFixed(2))) : baseVal;
-      const bcsNote = bcsAdjusted
-        ? '體態偏胖（BCS 6），已將係數下修 0.2 作為預防性調整，避免持續增重；下修後不低於 1.0 下限，尚不需啟動正式減重公式（BCS ≥7 才適用）。'
-        : '';
+      defaultCoeff = baseVal;
       if(tier.fixed!=null){
-        const note = ['高強度活動熱量需求差異大，此為常見參考值；長時間耐力型工作犬（如雪橇犬）需求可能更高，建議諮詢運動獸醫營養師個別調整。', bcsNote].filter(Boolean).join(' ');
-        html = coeffFixedHtml(tier.label, val, note);
+        minCoeff = tier.fixed;
+        maxCoeff = tier.fixed;
+        coeffLabel = `${tier.label}`;
+        coeffNote = '高強度活動熱量需求差異大，提供的係數為常見參考值；長時間耐力型工作犬（如雪橇犬）實際需求可能更高，建議與運動獸醫營養師討論調整。';
       } else {
         const statusLabel = state.neutered? '已絕育':'未絕育';
-        html = coeffFixedHtml(`${tier.label}・${statusLabel}`, val, bcsNote);
+        const rangeMin = state.neutered ? tier.neutered : tier.intact;
+        const rangeMax = state.neutered ? (tier.neutered + 0.2) : (tier.intact + 0.2);
+        minCoeff = Math.max(1.0, rangeMin - 0.2);
+        maxCoeff = rangeMax + 0.2;
+        defaultCoeff = rangeMin;
+        coeffLabel = `${tier.label}・${statusLabel}`;
+        coeffNote = '一般成犬活動係數。下方滑桿提供調整範圍，可依個體狀況與獸醫師討論後微調。';
       }
     }
+
+    html = `
+      <div class="coeff-value-line">
+        <span class="cvl-label">${coeffLabel}</span>
+        <span class="cvl-val">×<input type="range" id="coeffSlider" min="${minCoeff}" max="${maxCoeff}" step="0.05" value="${defaultCoeff}" style="width:140px;vertical-align:middle;"> <span class="slider-val">${defaultCoeff.toFixed(2)}</span></span>
+      </div>
+      ${coeffNote ? `<div class="coeff-note">${coeffNote}</div>` : ''}
+      <div class="coeff-advisory">💡 備註：上方係數為系統根據年齡、體態、生理狀態計算的建議值。請與獸醫師討論，根據個體反應（體重變化、活動表現、整體健康狀況）調整。</div>
+    `;
+    
     panel.innerHTML = html;
 
     const slider = panel.querySelector('input[type=range]');
     if(slider){
+      const valSpan = panel.querySelector('.slider-val');
+      state.coeffValue = parseFloat(slider.value);
       slider.addEventListener('input', e=>{
         state.coeffValue = parseFloat(e.target.value);
-        panel.querySelector('.cvl-val').textContent = `×${state.coeffValue.toFixed(2)}`;
+        valSpan.textContent = state.coeffValue.toFixed(2);
       });
-      state.coeffValue = parseFloat(slider.value);
     }
-  }
-
-  function coeffFixedHtml(label, val, note){
-    state.coeffValue = val;
-    return `
-      <div class="coeff-value-line">
-        <span class="cvl-label">${label}（固定係數）</span>
-        <span class="cvl-val">×${val.toFixed(2)}</span>
-      </div>
-      ${note? `<div class="coeff-note">${note}</div>`:''}
-    `;
-  }
-
-  function coeffRangeHtml(id, label, min, max, note, dispMin, dispMax){
-    const mid = parseFloat(((min+max)/2).toFixed(2));
-    const dmin = dispMin!=null?dispMin:min;
-    const dmax = dispMax!=null?dispMax:max;
-    return `
-      <div class="coeff-value-line">
-        <span class="cvl-label">${label}（區間 ×${dmin.toFixed(2)}–${dmax.toFixed(2)}）</span>
-        <span class="cvl-val">×${mid.toFixed(2)}</span>
-      </div>
-      <input type="range" min="${min}" max="${max}" step="0.05" value="${mid}">
-      ${note? `<div class="coeff-note">${note}</div>`:''}
-    `;
   }
 
   // initial render
