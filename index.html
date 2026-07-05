@@ -685,16 +685,13 @@
   function renderStep2(){
     const growth = growthCategory();
     const banner = document.getElementById('growthBanner');
-    const activityField = document.getElementById('activityField');
 
     if(state.pregnant || growth){
-      activityField.classList.add('hidden');
       banner.classList.remove('hidden');
       banner.textContent = state.pregnant
-        ? '偵測到懷孕／哺乳狀態，已自動採用懷孕期係數（見下方），暫不套用活動量設定。'
-        : `偵測到成長期動物（${Math.floor(state.ageMonths/12)} 歲 ${Math.round(state.ageMonths%12)} 個月），已自動採用成長期固定係數：${growth.label}，暫不套用活動量設定。`;
+        ? '偵測到懷孕／哺乳狀態，已自動採用懷孕期係數（見下方），活動量設定暫不套用。'
+        : `偵測到成長期動物（${Math.floor(state.ageMonths/12)} 歲 ${Math.round(state.ageMonths%12)} 個月），已自動採用成長期固定係數：${growth.label}，活動量設定暫不套用。`;
     } else {
-      activityField.classList.remove('hidden');
       banner.classList.add('hidden');
     }
     renderCoeffPanel();
